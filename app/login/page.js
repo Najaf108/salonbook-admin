@@ -1,178 +1,102 @@
-// app/login/page.js
 'use client';
-import { useState, useRef, useEffect } from 'react';
+
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authLib } from '@/lib/auth';
-import toast from 'react-hot-toast';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [step, setStep] = useState('phone'); // 'phone' | 'otp'
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState(['', '', '', '']);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [timer, setTimer] = useState(0);
-  const inputs = useRef([]);
+  const [error, setError] = useState('');
+  const router = useRouter();
+  const setAuth = useAuthStore(s => s.setAuth);
 
-  useEffect(() => {
-    if (authLib.isAuthenticated()) router.replace('/dashboard');
-  }, [router]);
-
-  useEffect(() => {
-    if (timer <= 0) return;
-    const iv = setInterval(() => setTimer(t => t - 1), 1000);
-    return () => clearInterval(iv);
-  }, [timer]);
-
-  const handlePhone = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const cleaned = phone.replace(/\s/g, '');
-    if (!/^03\d{9}$/.test(cleaned)) {
-      toast.error('Enter a valid Pakistani mobile number');
+    if (!email || !password) {
+      setError('Please enter both email and password.');
       return;
     }
-    setLoading(true);
-    try {
-      const res = await authLib.requestOTP(cleaned);
-      toast.success(res.otp ? `OTP: ${res.otp} (dev mode)` : 'OTP sent!');
-      setStep('otp');
-      setTimer(30);
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Could not send OTP');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleOtpChange = (val, idx) => {
-    if (!/^\d?$/.test(val)) return;
-    const next = [...otp];
-    next[idx] = val;
-    setOtp(next);
-    if (val && idx < 3) inputs.current[idx + 1]?.focus();
-    if (!val && idx > 0) inputs.current[idx - 1]?.focus();
-    if (next.every(d => d) && val) verifyOtp(next.join(''));
-  };
-
-  const verifyOtp = async (code) => {
     setLoading(true);
+    setError('');
     try {
-      await authLib.verifyOTP(phone.replace(/\s/g, ''), code);
-      toast.success('Welcome back!');
+      const { user, token } = await authLib.emailLogin(email, password);
+      setAuth(user, token);
       router.replace('/dashboard');
     } catch (err) {
-      toast.error(err.message || 'Invalid OTP');
-      setOtp(['', '', '', '']);
-      inputs.current[0]?.focus();
+      console.error('Login Error:', err);
+      setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const resendOtp = async () => {
-    if (timer > 0) return;
-    await authLib.requestOTP(phone.replace(/\s/g, ''));
-    setTimer(30);
-    toast.success('New OTP sent');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-gray-950 flex items-center justify-center p-4">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
-      </div>
-
-      <div className="relative w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-purple-600 rounded-2xl text-2xl mb-4 shadow-lg shadow-purple-600/30">
-            💈
+    <div className="min-h-screen flex items-center justify-center bg-[#f8faf9] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-2xl shadow-xl border border-gray-100">
+        <div className="text-center">
+          <div className="mx-auto h-20 w-20 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white">SalonBook Admin</h1>
-          <p className="text-gray-400 text-sm mt-1">Platform Administration</p>
+          <h2 className="text-3xl font-black text-gray-900 tracking-tight">Admin Portal</h2>
+          <p className="mt-2 text-sm text-gray-500">
+            Secure access for authorized personnel only
+          </p>
         </div>
 
-        {/* Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
-          {step === 'phone' ? (
-            <form onSubmit={handlePhone} className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-300 mb-2">Admin Phone Number</label>
-                <div className="flex rounded-xl overflow-hidden border border-white/10 bg-white/5 focus-within:border-purple-500 focus-within:ring-1 focus-within:ring-purple-500 transition-all">
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    placeholder="03XX XXXXXXX"
-                    maxLength={11}
-                    className="flex-1 bg-transparent px-4 py-3 text-white text-sm placeholder-gray-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                disabled={loading || !phone}
-                className="w-full py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-600/40 text-white text-sm font-semibold rounded-xl transition-colors"
-              >
-                {loading ? 'Sending...' : 'Send OTP →'}
-              </button>
-            </form>
-          ) : (
-            <div className="space-y-5">
-              <div>
-                <p className="text-sm text-gray-300 mb-1">Enter the 4-digit code sent to</p>
-                <p className="text-white font-semibold">{phone}</p>
-              </div>
-
-              <div className="flex gap-3 justify-center">
-                {otp.map((digit, i) => (
-                  <input
-                    key={i}
-                    ref={r => inputs.current[i] = r}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={e => handleOtpChange(e.target.value, i)}
-                    autoFocus={i === 0}
-                    className={`
-                      w-14 h-14 text-center text-2xl font-bold rounded-xl border text-white bg-white/5
-                      focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all
-                      ${digit ? 'border-purple-500 bg-purple-500/10' : 'border-white/10'}
-                    `}
-                  />
-                ))}
-              </div>
-
-              {loading && (
-                <p className="text-center text-sm text-gray-400">Verifying...</p>
-              )}
-
-              <div className="text-center">
-                <button
-                  onClick={resendOtp}
-                  disabled={timer > 0}
-                  className="text-sm text-purple-400 hover:text-purple-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
-                >
-                  {timer > 0 ? `Resend in ${timer}s` : 'Resend OTP'}
-                </button>
-              </div>
-
-              <button
-                onClick={() => { setStep('phone'); setOtp(['', '', '', '']); }}
-                className="w-full py-2.5 text-sm text-gray-400 hover:text-white border border-white/10 rounded-xl transition-colors hover:bg-white/5"
-              >
-                ← Change number
-              </button>
+        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+          {error ? (
+            <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm font-medium border border-red-100">
+              {error}
             </div>
-          )}
-        </div>
+          ) : null}
 
-        <p className="text-center text-xs text-gray-600 mt-6">
-          Only registered admin accounts can access this panel
-        </p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Email Address</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all sm:text-sm"
+                placeholder="Enter email"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all sm:text-sm"
+                placeholder="••••••••"
+              />
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 disabled:opacity-50"
+            >
+              {loading ? 'Authenticating...' : 'Sign In to Dashboard'}
+            </button>
+          </div>
+
+          <div className="flex items-center justify-center space-x-2 text-[10px] text-gray-300 font-bold tracking-[0.2em]">
+            <span className="h-[1px] w-8 bg-gray-100"></span>
+            <span>RESTRICTED AREA</span>
+            <span className="h-[1px] w-8 bg-gray-100"></span>
+          </div>
+        </form>
       </div>
     </div>
   );
