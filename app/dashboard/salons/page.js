@@ -1,6 +1,6 @@
 // app/(dashboard)/salons/page.js
 'use client';
-import { useState, memo, useCallback } from 'react';
+import { useState, memo, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { useAdminSalons, useVerifySalon, useSuspendSalon, useUnsuspendSalon } from '@/hooks/useSalons';
@@ -86,7 +86,7 @@ const SalonRow = memo(({ salon, router, onConfirmAction }) => (
   </Tr>
 ));
 
-export default function SalonsPage() {
+function SalonsContent() {
   const router = useRouter();
   const sp = useSearchParams();
   const [page, setPage] = useState(1);
@@ -199,5 +199,13 @@ export default function SalonsPage() {
         loading={verifying || suspending || unsuspending}
       />
     </div>
+  );
+}
+
+export default function SalonsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading salons...</div>}>
+      <SalonsContent />
+    </Suspense>
   );
 }

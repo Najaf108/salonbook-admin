@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { format } from 'date-fns';
 import Image from 'next/image';
@@ -11,7 +11,7 @@ import { Star, Eye, EyeOff, AlertTriangle, ShieldCheck, Trash2 } from 'lucide-re
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 
-export default function ReviewsManagementPage() {
+function ReviewsContent() {
     const searchParams = useSearchParams();
     const initialFilter = searchParams.get('filter') === 'reported' ? 'REPORTED' : 'ALL';
 
@@ -174,5 +174,13 @@ export default function ReviewsManagementPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function ReviewsManagementPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading reviews...</div>}>
+            <ReviewsContent />
+        </Suspense>
     );
 }
