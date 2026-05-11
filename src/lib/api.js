@@ -1,7 +1,7 @@
 // src/lib/api.js
 import axios from 'axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://salonbook-backend-xcno.onrender.com/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://api.salonbook.click/api'
 
 export const api = axios.create({
   baseURL: BASE_URL,
