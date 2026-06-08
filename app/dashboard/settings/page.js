@@ -1,6 +1,6 @@
 // app/(dashboard)/settings/page.js
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { Settings } from 'lucide-react';
@@ -8,6 +8,20 @@ import { Settings } from 'lucide-react';
 export default function SettingsPage() {
   const [commission, setCommission] = useState({ BASIC: 10, PRO: 8, PREMIUM: 7 });
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await api.get('/admin/settings');
+        if (data.defaultCommissions) {
+          setCommission(data.defaultCommissions);
+        }
+      } catch (err) {
+        console.error('Failed to fetch settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);

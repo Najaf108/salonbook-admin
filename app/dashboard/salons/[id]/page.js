@@ -1,9 +1,10 @@
 // app/(dashboard)/salons/[id]/page.js
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import Image from 'next/image';
+import api from '@/lib/api';
 import { useAdminSalons, useSalonDetail, useVerifySalon, useSuspendSalon, useUpdateSalonPlan } from '@/hooks/useSalons';
 import { useAdminBookings } from '@/hooks/useBookings';
 import { useAllReviews, useHideReview, useRestoreReview } from '@/hooks/useReviews';
@@ -14,8 +15,6 @@ import { Table, Thead, Th, Tbody, Tr, Td } from '@/components/DataTable';
 import { ArrowLeft, Phone, MapPin, CheckCircle, XCircle, Star } from 'lucide-react';
 import clsx from 'clsx';
 
-const PLAN_COMMISSION = { BASIC: 10, PRO: 8, PREMIUM: 7 };
-
 export default function SalonDetailPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -23,6 +22,21 @@ export default function SalonDetailPage() {
   const [planModal, setPlanModal] = useState(false);
   const [planForm, setPlanForm] = useState({ plan: '', commission: '' });
   const [tab, setTab] = useState('overview');
+  const [planCommission, setPlanCommission] = useState({ BASIC: 10, PRO: 8, PREMIUM: 7 });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await api.get('/admin/settings');
+        if (data.defaultCommissions) {
+          setPlanCommission(data.defaultCommissions);
+        }
+      } catch (err) {
+        console.error('Failed to fetch settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const { data: salon, isLoading } = useSalonDetail(id);
   const { data: bkData } = useAdminBookings({ salonId: id, limit: 10 });
@@ -388,7 +402,7 @@ export default function SalonDetailPage() {
               {['BASIC', 'PRO', 'PREMIUM'].map(p => (
                 <button
                   key={p}
-                  onClick={() => setPlanForm(prev => ({ ...prev, plan: p, commission: String(PLAN_COMMISSION[p]) }))}
+                  onClick={() => setPlanForm(prev => ({ ...prev, plan: p, commission: String(planCommission[p]) }))}
                   className={clsx(
                     'py-2.5 text-sm font-semibold rounded-lg border transition-all',
                     planForm.plan === p
