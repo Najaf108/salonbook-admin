@@ -12,9 +12,9 @@ export default function SettingsPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const data = await api.get('/admin/settings');
-        if (data.defaultCommissions) {
-          setCommission(data.defaultCommissions);
+        const res = await api.get('/admin/settings');
+        if (res.data && res.data.defaultCommissions) {
+          setCommission(res.data.defaultCommissions);
         }
       } catch (err) {
         console.error('Failed to fetch settings:', err);

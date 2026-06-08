@@ -27,9 +27,9 @@ export default function SalonDetailPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const data = await api.get('/admin/settings');
-        if (data.defaultCommissions) {
-          setPlanCommission(data.defaultCommissions);
+        const res = await api.get('/admin/settings');
+        if (res.data && res.data.defaultCommissions) {
+          setPlanCommission(res.data.defaultCommissions);
         }
       } catch (err) {
         console.error('Failed to fetch settings:', err);
