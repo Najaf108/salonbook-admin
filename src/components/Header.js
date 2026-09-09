@@ -5,12 +5,13 @@ import { authLib } from '@/lib/auth';
 import { Bell } from 'lucide-react';
 
 const TITLES = {
-  '/dashboard':             'Dashboard',
-  '/dashboard/salons':      'Salons',
-  '/dashboard/bookings':    'Bookings',
-  '/dashboard/users':       'Users',
+  '/dashboard': 'Dashboard',
+  '/dashboard/salons': 'Salons',
+  '/dashboard/bookings': 'Bookings',
+  '/dashboard/users': 'Users',
   '/dashboard/commissions': 'Commissions',
-  '/dashboard/settings':    'Settings',
+  '/dashboard/support': 'Support',
+  '/dashboard/settings': 'Settings',
 };
 
 export default function Header() {

@@ -6,7 +6,7 @@ import { authLib } from '@/lib/auth';
 import clsx from 'clsx';
 import {
   LayoutDashboard, Building2, BookOpen, Users,
-  DollarSign, Settings, LogOut, MessageSquare, Crown, LifeBuoy
+  DollarSign, Settings, LogOut, MessageSquare, Crown, LifeBuoy, Bell
 } from 'lucide-react';
 import { useReviewMetrics } from '@/hooks/useReviews';
 
@@ -18,6 +18,7 @@ const NAV = [
   { href: '/dashboard/users', icon: Users, label: 'Users' },
   { href: '/dashboard/commissions', icon: DollarSign, label: 'Commissions' },
   { href: '/dashboard/reviews', icon: MessageSquare, label: 'Reviews' },
+  { href: '/dashboard/notifications', icon: Bell, label: 'Notifications' },
   { href: '/dashboard/support', icon: LifeBuoy, label: 'Support' },
   { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];
